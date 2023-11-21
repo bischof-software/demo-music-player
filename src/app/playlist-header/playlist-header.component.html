@@ -1,0 +1,16 @@
+<div *ngIf="playlist$ | async as playlist">
+    <div class="grid">
+        <div *ngIf="editPlaylistName; else showPlaylistName" class="col flex align-items-center justify-content-center">
+            <input class="headerInput p-inputtext-lg" pInputText placeholder="{{ playlist.name }}"
+                   [(ngModel)]="newPlaylistName" (focusout)="changePlaylistName()"/>
+        </div>
+        <ng-template #showPlaylistName>
+            <div class="col flex align-items-center justify-content-center">
+                <h1>{{ playlist.name }}</h1>
+            </div>
+        </ng-template>
+        <div class="col-1">
+            <p-speedDial [model]="items" direction="right"></p-speedDial>
+        </div>
+    </div>
+</div>

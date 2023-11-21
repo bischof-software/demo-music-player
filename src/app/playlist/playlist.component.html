@@ -1,0 +1,11 @@
+<div *ngIf="(playlist$ | async); else skeleton" class="playlist">
+    <p-card>
+        <app-playlist-header [playlist$]="playlist$"></app-playlist-header>
+        <app-playlist-data [playlist$]="playlist$"></app-playlist-data>
+    </p-card>
+</div>
+<ng-template #skeleton>
+    <div class="playlist">
+        <p-skeleton width="30rem" height="20rem"></p-skeleton>
+    </div>
+</ng-template>

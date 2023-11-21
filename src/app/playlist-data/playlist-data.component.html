@@ -1,0 +1,27 @@
+<div *ngIf="playlist$ | async as playlist">
+    <p-dataView #dv [value]="playlist.tracks">
+        <ng-template let-track
+                     pTemplate="listItem">
+            <div class="col-12">
+                <div class="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
+                    <div class="flex flex-column sm:flex-row justify-content-between align-items-center xl:align-items-start flex-1 gap-4">
+                        <div class="flex flex-column align-items-center sm:align-items-start gap-3">
+                            <div class="text-2xl font-bold text-900">{{ track.title }}</div>
+                            <div class="flex align-items-center gap-3">
+                            <span class="flex align-items-center gap-2">
+                                <i class="pi pi-user"></i>
+                                <span class="font-semibold">{{ track.artist }} - {{ track.album }}</span>
+                            </span>
+                            </div>
+                        </div>
+                        <div class="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
+                            <span class="text-2xl font-semibold">{{ track.duration | duration }}</span>
+                            <p-button icon="pi pi-trash" class="md:align-self-end mb-2 p-button-rounded"
+                                      (onClick)="removeTrack(track)"></p-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+    </p-dataView>
+</div>
