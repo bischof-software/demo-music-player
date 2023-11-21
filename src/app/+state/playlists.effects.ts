@@ -25,7 +25,6 @@ export class PlaylistsEffects {
                                 playlist: playlist
                             }))
                             playlistEntities = loaded ? loadedPlaylistsEntities : playlistEntities;
-                            console.log(loaded ? loadedPlaylistsEntities : playlistEntities);
                             return PlaylistsActions.loadPlaylistsSuccess({playlists: playlistEntities})
                         }
                     )

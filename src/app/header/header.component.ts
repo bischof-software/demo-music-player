@@ -34,6 +34,7 @@ export class HeaderComponent implements OnInit {
 
     selectPlaylist = () => this.playlists.selectPlaylist(this.selectedPlaylist);
 
+
     newPlaylist = () => this.addNewPlaylist = true;
     newPlaylistAdded = () => {
         this.addNewPlaylist = false;
