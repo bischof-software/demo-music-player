@@ -1,98 +1,140 @@
-import {NgModule} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
-import {EffectsModule} from '@ngrx/effects';
-import {Store, StoreModule} from '@ngrx/store';
-import {readFirst} from '@nx/angular/testing';
-
-import * as PlaylistsActions from './playlists.actions';
-import {PlaylistsEffects} from './playlists.effects';
 import {PlaylistsFacade} from './playlists.facade';
 import {PlaylistsEntity} from './playlists.models';
-import {PLAYLISTS_FEATURE_KEY, playlistsReducer, PlaylistsState,} from './playlists.reducer';
-
-interface TestSchema {
-    playlists: PlaylistsState;
-}
+import {PlaylistsState,} from './playlists.reducer';
+import {firstValueFrom} from "rxjs";
+import {MockStore, provideMockStore} from "@ngrx/store/testing";
+import {
+    selectAllPlaylists,
+    selectEntity,
+    selectEntityWithId,
+    selectPlaylistsEntities,
+    selectPlaylistsLoaded,
+    selectSelectedId
+} from "./playlists.selectors";
+import * as PlaylistsActions from "./playlists.actions";
 
 describe('PlaylistsFacade', () => {
     let facade: PlaylistsFacade;
-    let store: Store<TestSchema>;
-    const createPlaylistsEntity = (id: string, name = ''): PlaylistsEntity => ({
+    let store: MockStore<PlaylistsState>;
+    let storeDispatchSpy: jest.SpyInstance = jest.fn();
+
+    const initialState = {selectedId: undefined, loaded: false, error: undefined, selectedPlaylist: undefined};
+
+    const createPlaylistsEntity = (id: string): PlaylistsEntity => ({
         id,
-        name: name || `name-${id}`,
+        playlist: {
+            name: id,
+            tracks: [{
+                title: 'title',
+                artist: 'artist',
+                duration: 123,
+                album: 'album'
+            }]
+        }
     });
 
-    describe('used in NgModule', () => {
-        beforeEach(() => {
-            @NgModule({
-                imports: [
-                    StoreModule.forFeature(PLAYLISTS_FEATURE_KEY, playlistsReducer),
-                    EffectsModule.forFeature([PlaylistsEffects]),
-                ],
-                providers: [PlaylistsFacade],
-            })
-            class CustomFeatureModule {
-            }
-
-            @NgModule({
-                imports: [
-                    StoreModule.forRoot({}),
-                    EffectsModule.forRoot([]),
-                    CustomFeatureModule,
-                ],
-            })
-            class RootModule {
-            }
-
-            TestBed.configureTestingModule({imports: [RootModule]});
-
-            store = TestBed.inject(Store);
-            facade = TestBed.inject(PlaylistsFacade);
-        });
-
-        /**
-         * The initially generated facade::loadAll() returns empty array
-         */
-        it('loadAll() should return empty list with loaded == true', async () => {
-            let list = await readFirst(facade.allPlaylists$);
-            let isLoaded = await readFirst(facade.loaded$);
-
-            expect(list.length).toBe(0);
-            expect(isLoaded).toBe(false);
-
-            facade.init();
-
-            list = await readFirst(facade.allPlaylists$);
-            isLoaded = await readFirst(facade.loaded$);
-
-            expect(list.length).toBe(0);
-            expect(isLoaded).toBe(true);
-        });
-
-        /**
-         * Use `loadPlaylistsSuccess` to manually update list
-         */
-        it('allPlaylists$ should return the loaded list; and loaded flag == true', async () => {
-            let list = await readFirst(facade.allPlaylists$);
-            let isLoaded = await readFirst(facade.loaded$);
-
-            expect(list.length).toBe(0);
-            expect(isLoaded).toBe(false);
-
-            store.dispatch(
-                PlaylistsActions.loadPlaylistsSuccess({
-                    playlists: [
-                        createPlaylistsEntity('AAA'),
-                        createPlaylistsEntity('BBB'),
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                PlaylistsFacade,
+                provideMockStore({
+                    selectors: [
+                        {
+                            selector: selectPlaylistsLoaded,
+                            value: false
+                        },
+                        {
+                            selector: selectAllPlaylists,
+                            value: [createPlaylistsEntity('test-selectAllPlaylists')]
+                        },
+                        {
+                            selector: selectEntity,
+                            value: createPlaylistsEntity('test-selectEntity')
+                        },
+                        {
+                            selector: selectEntityWithId('test-selectEntityWithId'),
+                            value: createPlaylistsEntity('test-selectEntityWithId')
+                        },
+                        {
+                            selector: selectSelectedId,
+                            value: 'test-selectSelectedId'
+                        },
+                        {
+                            selector: selectPlaylistsEntities,
+                            value: [createPlaylistsEntity('test-selectEntity')]
+                        },
                     ],
-                })
-            );
-
-            list = await readFirst(facade.allPlaylists$);
-            isLoaded = await readFirst(facade.loaded$);
-
-            expect(list.length).toBe(2);
-            expect(isLoaded).toBe(true);
+                    initialState
+                }),
+            ],
         });
+
+        store = TestBed.inject(MockStore);
+        facade = TestBed.inject(PlaylistsFacade);
+        storeDispatchSpy = jest.spyOn(store, 'dispatch');
     });
+
+    afterEach(() => {
+        store?.resetSelectors();
+    });
+
+    it('selectors will receive the expected values', async () => {
+        let isLoaded = await firstValueFrom(facade.loaded$);
+        expect(isLoaded).toBe(false);
+
+        let allPlaylists = await firstValueFrom(facade.allPlaylists$);
+        expect(allPlaylists).toStrictEqual([createPlaylistsEntity('test-selectAllPlaylists').playlist]);
+
+        let selectedPlaylists = await firstValueFrom(facade.selectedPlaylists$);
+        expect(selectedPlaylists).toStrictEqual(createPlaylistsEntity('test-selectEntity').playlist);
+
+        let selectedPlaylistsName = await firstValueFrom(facade.selectedPlaylistsName$);
+        expect(selectedPlaylistsName).toStrictEqual(createPlaylistsEntity('test-selectSelectedId').playlist.name);
+
+        let selectTracksFromPlaylistWithName = await firstValueFrom(facade.selectTracksFromPlaylistWithName('test-selectEntity'));
+        // expect(selectTracksFromPlaylistWithName).toStrictEqual(createPlaylistsEntity('test-selectEntity').playlist.tracks);
+    });
+
+    it('init dispatches initPlaylists', async () => {
+        facade.init();
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.initPlaylists())
+    });
+
+    it('selectPlaylist dispatches selectPlaylist with parameter value or empty string if no value is given', async () => {
+        facade.selectPlaylist('test-selectPlaylist');
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.selectPlaylist({playlistName: 'test-selectPlaylist'}))
+
+        facade.selectPlaylist(undefined);
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.selectPlaylist({playlistName: ''}))
+    });
+
+    it('addPlaylist dispatches addPlaylist with parameter value', async () => {
+        facade.addPlaylist('test-addPlaylist');
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.addPlaylist({playlistName: 'test-addPlaylist'}))
+    });
+
+    it('addTrackToPlaylist dispatches addTrackToPlaylist with parameter value', async () => {
+        const track = createPlaylistsEntity('addTrackToPlaylist').playlist.tracks[0];
+        facade.addTrackToPlaylist(track);
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.addTrackToPlaylist({track}))
+    });
+
+    it('removeTrackFromPlaylist dispatches removeTrackFromPlaylist with parameter value', async () => {
+        const track = createPlaylistsEntity('addTrackToPlaylist').playlist.tracks[0];
+        facade.removeTrackFromPlaylist(track);
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.removeTrackFromPlaylist({track}))
+    });
+
+    it('importTracksFromPlaylist dispatches importTracksFromPlaylist with parameter value', async () => {
+        const tracks = createPlaylistsEntity('addTrackToPlaylist').playlist.tracks;
+        facade.importTracksFromPlaylist(tracks);
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.importTracksFromPlaylist({tracks}))
+    });
+
+    it('renamePlaylist dispatches renamePlaylist with parameter value', async () => {
+        facade.renamePlaylist('test-renamePlaylist');
+        expect(storeDispatchSpy).toHaveBeenCalledWith(PlaylistsActions.renamePlaylist({playlistName: 'test-renamePlaylist'}))
+    });
+
 });

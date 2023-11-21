@@ -49,10 +49,10 @@ const reducer = createReducer(
         playlistsAdapter.addOne(playlist, {...state, loaded: true, selectedId: playlist.id})
     ),
     on(PlaylistsActions.removePlaylist, (state, {playlistName}) =>
-        playlistsAdapter.removeOne(playlistName, state,)
+        playlistsAdapter.removeOne(playlistName, {...state},)
     ),
     on(PlaylistsActions.addPlaylist, (state, {playlistName}) =>
-        playlistsAdapter.addOne({id: playlistName, playlist: {name: playlistName, tracks: []}}, {...state, loaded: true})
+        playlistsAdapter.addOne({id: playlistName, playlist: {name: playlistName, tracks: []}}, {...state})
     ),
     on(PlaylistsActions.updatedPlaylist, (state, {playlist}) =>
         playlistsAdapter.upsertOne(playlist, {...state})

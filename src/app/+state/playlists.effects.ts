@@ -1,12 +1,11 @@
 import {inject, Injectable} from '@angular/core';
 import {Actions, concatLatestFrom, createEffect, ofType} from '@ngrx/effects';
-import {catchError, map, of, switchMap} from 'rxjs';
+import {catchError, map, of, switchMap, withLatestFrom} from 'rxjs';
 import * as PlaylistsActions from './playlists.actions';
 import {PlaylistService} from "../controller/playlist.service";
 import {PlaylistsEntity} from "./playlists.models";
 import {Store} from "@ngrx/store";
-import {selectEntity} from "./playlists.selectors";
-import {addTrackToPlaylist, importTracksFromPlaylist} from "./playlists.actions";
+import {selectAllPlaylists, selectEntity, selectPlaylistsLoaded} from "./playlists.selectors";
 
 @Injectable()
 export class PlaylistsEffects {
@@ -17,13 +16,16 @@ export class PlaylistsEffects {
     init$ = createEffect(() =>
         this.actions$.pipe(
             ofType(PlaylistsActions.initPlaylists),
-            switchMap(() => this.playlistService.getAllPlaylists().pipe(
+            withLatestFrom(this.store.select(selectPlaylistsLoaded), this.store.select(selectAllPlaylists)),
+            switchMap(([, loaded, loadedPlaylistsEntities,]) => this.playlistService.getAllPlaylists().pipe(
                     map(playlists => {
-                            const playlistEntities: PlaylistsEntity[] = [];
+                            let playlistEntities: PlaylistsEntity[] = [];
                             playlists.forEach(playlist => playlistEntities.push({
                                 id: playlist.name,
                                 playlist: playlist
                             }))
+                            playlistEntities = loaded ? loadedPlaylistsEntities : playlistEntities;
+                            console.log(loaded ? loadedPlaylistsEntities : playlistEntities);
                             return PlaylistsActions.loadPlaylistsSuccess({playlists: playlistEntities})
                         }
                     )
@@ -118,5 +120,4 @@ export class PlaylistsEffects {
             })
         )
     );
-
 }

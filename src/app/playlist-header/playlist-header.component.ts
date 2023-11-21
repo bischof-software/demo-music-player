@@ -46,7 +46,7 @@ export class PlaylistHeaderComponent implements OnInit {
                 command: () => this.dialogService.open(NewTrackComponent, {
                     header: 'Neuer Track',
                     width: '70%',
-                    contentStyle: { overflow: 'auto' },
+                    contentStyle: {overflow: 'auto'},
                     baseZIndex: 10000,
                 }),
                 tooltipOptions: {
@@ -58,7 +58,7 @@ export class PlaylistHeaderComponent implements OnInit {
                 command: () => this.dialogService.open(ImportTrackComponent, {
                     header: 'Importiere Track',
                     width: '70%',
-                    contentStyle: { overflow: 'auto' },
+                    contentStyle: {overflow: 'auto'},
                     baseZIndex: 10000,
                 }),
                 tooltipOptions: {

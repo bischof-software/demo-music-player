@@ -4,7 +4,7 @@ import {ButtonModule} from "primeng/button";
 import {Track} from "../model/track";
 import {TableModule} from "primeng/table";
 import {PlaylistsFacade} from "../+state/playlists.facade";
-import {Observable, take} from "rxjs";
+import {take} from "rxjs";
 import {FormsModule} from "@angular/forms";
 import {DropdownModule} from "primeng/dropdown";
 import {CardModule} from "primeng/card";
@@ -12,7 +12,6 @@ import {PlaylistDataComponent} from "../playlist-data/playlist-data.component";
 import {PlaylistHeaderComponent} from "../playlist-header/playlist-header.component";
 import {SkeletonModule} from "primeng/skeleton";
 import {DurationPipe} from "../controller/duration.pipe";
-import {Playlist} from "../model/playlist";
 import {LetDirective} from '@ngrx/component';
 import {DynamicDialogRef} from "primeng/dynamicdialog";
 
